@@ -1,0 +1,19 @@
+services:
+  caddy:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "${PROXY_BIND:-127.0.0.1:8080}:80"
+    depends_on: [ backend ]
+    logging:
+      driver: json-file
+      options: { max-size: "10m", max-file: "3" }
+
+  backend:
+    build: ./backend
+    environment:
+      APP_ENV: ${APP_ENV:-local}
+    logging:
+      driver: json-file
+      options: { max-size: "10m", max-file: "3" }

@@ -1,0 +1,14 @@
+name: enforce-source-branch
+on:
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  check-source:
+    runs-on: ubuntu-latest
+    steps:
+      - name: only development may merge into main
+        if: github.head_ref != 'development'
+        run: |
+          echo "PRs into main must come from development (got '${{ github.head_ref }}')."
+          exit 1

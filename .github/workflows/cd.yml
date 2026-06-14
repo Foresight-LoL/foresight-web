@@ -1,0 +1,58 @@
+name: CD
+on:
+  push:
+    branches: [ development, main ]
+
+permissions:
+  statuses: write
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: [ self-hosted, foresight ]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: pick environment
+        id: env
+        run: |
+          if [ "${{ github.ref_name }}" = "main" ]; then
+            echo "bind=127.0.0.1:8080"      >> "$GITHUB_OUTPUT"
+            echo "appenv=prod"              >> "$GITHUB_OUTPUT"
+            echo "project=foresight-prod"   >> "$GITHUB_OUTPUT"
+          else
+            echo "bind=100.123.83.105:8090" >> "$GITHUB_OUTPUT"
+            echo "appenv=test"              >> "$GITHUB_OUTPUT"
+            echo "project=foresight-test"   >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: build & deploy
+        run: |
+          PROXY_BIND=${{ steps.env.outputs.bind }} \
+          APP_ENV=${{ steps.env.outputs.appenv }} \
+          docker compose -p ${{ steps.env.outputs.project }} \
+            --env-file /home/cdeploy/foresight-web/.env \
+            -f docker-compose.yml up -d --build
+
+      - name: smoke-test the test deploy
+        if: steps.env.outputs.appenv == 'test'
+        run: |
+          for i in $(seq 1 15); do
+            if curl -fsS http://100.123.83.105:8090/api/health | grep -q '"ok"'; then
+              echo "healthy"; exit 0
+            fi
+            sleep 2
+          done
+          echo "test stack did not become healthy"; exit 1
+
+      - name: mark commit as deploy-verified
+        if: steps.env.outputs.appenv == 'test'
+        run: |
+          curl -fsS -X POST \
+            -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+            -H "Accept: application/vnd.github+json" \
+            "https://api.github.com/repos/${{ github.repository }}/statuses/${{ github.sha }}" \
+            -d '{"state":"success","context":"deploy-verified","description":"test deploy healthy on :8090"}'
+
+      - name: prune old images
+        run: docker image prune -f
