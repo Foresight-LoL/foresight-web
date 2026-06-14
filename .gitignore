@@ -1,0 +1,18 @@
+# python
+backend/.venv/
+__pycache__/
+*.pyc
+
+# node
+frontend/node_modules/
+frontend/dist/
+
+# env / secrets
+.env
+
+# OS / editor
+.DS_Store
+.idea/
+
+# auto-added
+/backend/foresight_web_backend.egg-info/
