@@ -1,0 +1,21 @@
+[project]
+name = "foresight-web-backend"
+version = "0.1.0"
+requires-python = ">=3.14"
+dependencies = [
+    "fastapi",
+    "uvicorn[standard]",
+    # Uncomment once foresight-core is pushed + tagged.
+    # Use the build-secret/SSH pattern from spec §8 in Docker, not here.
+    # "foresight-core @ git+ssh://git@github.com/Git-Lukyen/foresight-core.git@v0.1.0",
+]
+
+[project.optional-dependencies]
+dev = ["ruff", "pytest", "httpx"]
+
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+packages = ["app"]
