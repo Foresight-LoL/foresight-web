@@ -1,0 +1,9 @@
+.git/
+backend/
+frontend/node_modules/
+frontend/dist/
+**/__pycache__/
+**/*.egg-info/
+.idea/
+LICENSE
+docs/
